@@ -9,7 +9,7 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from openai import OpenAI
+from openai import OpenAI, AuthenticationError, RateLimitError, APIError
 from dotenv import load_dotenv
 import subprocess
 import tempfile
@@ -199,28 +199,48 @@ def transcribe_audio_chunk(chunk_path, chunk_num, total_chunks):
     chunk_size = get_file_size(Path(chunk_path))
     log(f"    Chunk size: {chunk_size:.2f} MB")
     
-    with open(chunk_path, "rb") as audio_file:
-        log(f"    Sending chunk to OpenAI Whisper API...")
+    try:
+        with open(chunk_path, "rb") as audio_file:
+            log(f"    Sending chunk to OpenAI Whisper API...")
+            
+            api_start = time.time()
+            
+            # Build API parameters
+            api_params = {
+                "model": WHISPER_MODEL,
+                "file": audio_file,
+                "response_format": "text"
+            }
+            
+            # Add language parameter if specified
+            if WHISPER_LANGUAGE:
+                api_params["language"] = WHISPER_LANGUAGE
+            
+            transcription = client.audio.transcriptions.create(**api_params)
+            api_time = time.time() - api_start
+            
+            log(f"    Chunk {chunk_num} transcribed in {api_time:.1f} seconds ({len(transcription)} characters)")
         
-        api_start = time.time()
-        
-        # Build API parameters
-        api_params = {
-            "model": WHISPER_MODEL,
-            "file": audio_file,
-            "response_format": "text"
-        }
-        
-        # Add language parameter if specified
-        if WHISPER_LANGUAGE:
-            api_params["language"] = WHISPER_LANGUAGE
-        
-        transcription = client.audio.transcriptions.create(**api_params)
-        api_time = time.time() - api_start
-        
-        log(f"    Chunk {chunk_num} transcribed in {api_time:.1f} seconds ({len(transcription)} characters)")
+        return transcription
     
-    return transcription
+    except AuthenticationError as e:
+        log(f"\n  ERROR: Invalid API key!")
+        log(f"  Your OpenAI API key is incorrect or expired.")
+        log(f"  Please check your .env file and update OPENAI_API_KEY")
+        log(f"  Get a new key at: https://platform.openai.com/api-keys")
+        raise
+    
+    except RateLimitError as e:
+        log(f"\n  ERROR: Rate limit exceeded!")
+        log(f"  You've hit the API rate limit or ran out of credits.")
+        log(f"  Please check your OpenAI account: https://platform.openai.com/account/billing")
+        raise
+    
+    except APIError as e:
+        log(f"\n  ERROR: OpenAI API error!")
+        log(f"  The API returned an error: {str(e)}")
+        log(f"  This might be temporary - try again in a few moments.")
+        raise
 
 def transcribe_file(file_path):
     """
@@ -415,12 +435,28 @@ def main():
                 log(f"  Estimated time remaining: {format_time(estimated_remaining)}")
                 log(f"  Files remaining: {remaining_files}")
             
+        except AuthenticationError:
+            log(f"\n  TRANSCRIPTION FAILED - Invalid API Key")
+            log(f"  Please fix your API key and try again.")
+            continue
+            
+        except RateLimitError:
+            log(f"\n  TRANSCRIPTION FAILED - Rate Limit Exceeded")
+            log(f"  Please check your OpenAI account and try again later.")
+            continue
+            
+        except APIError as e:
+            log(f"\n  TRANSCRIPTION FAILED - API Error")
+            log(f"  OpenAI API issue: {str(e)}")
+            log(f"  This might be temporary, please try again.")
+            continue
+            
         except Exception as e:
-            log(f"\n  ERROR: Failed to transcribe!")
-            log(f"  Error message: {str(e)}")
+            log(f"\n  ERROR: Unexpected error during transcription!")
             log(f"  Error type: {type(e).__name__}")
+            log(f"  Error message: {str(e)}")
             import traceback
-            log(f"  Traceback:\n{traceback.format_exc()}")
+            log(f"  Full traceback:\n{traceback.format_exc()}")
             continue
     
     # Summary
