@@ -1,5 +1,9 @@
 # Audio/Video Transcription Tool
 
+![Python](https://img.shields.io/badge/python-3.7+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![OpenAI](https://img.shields.io/badge/OpenAI-Whisper-orange.svg)
+
 A Python-based command-line tool that transcribes audio and video files to text using OpenAI's Whisper API. Handles large files automatically by extracting audio from videos and splitting files into manageable chunks.
 
 ## Features
@@ -137,7 +141,7 @@ Check current pricing at [openai.com/pricing](https://openai.com/pricing).
 ## Project Structure
 
 ```
-transcribeFromVideo/
+transcribe-video-and-audio/
 ├── main.py              # Main transcription script
 ├── requirements.txt     # Python dependencies
 ├── .env                 # API key (not committed to git)

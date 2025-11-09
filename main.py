@@ -82,7 +82,8 @@ def get_audio_duration(file_path):
             str(file_path)
         ], capture_output=True, text=True, check=True)
         return float(result.stdout.strip())
-    except:
+    except (subprocess.CalledProcessError, ValueError, FileNotFoundError) as e:
+        log(f"  Warning: Could not determine audio duration: {e}")
         return None
 
 def extract_audio_from_video(video_path):
@@ -281,8 +282,8 @@ def transcribe_file(file_path):
                 if temp_file and os.path.exists(temp_file):
                     try:
                         os.unlink(temp_file)
-                    except:
-                        pass
+                    except (OSError, PermissionError) as e:
+                        log(f"  Warning: Could not delete {temp_file}: {e}")
 
 
 def save_transcription(file_path, transcription_text):
