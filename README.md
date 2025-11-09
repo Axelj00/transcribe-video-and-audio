@@ -44,8 +44,8 @@ Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH.
 ### 2. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/transcribeFromVideo.git
-cd transcribeFromVideo
+git clone https://github.com/Axelj00/transcribe-video-and-audio.git
+cd transcribe-video-and-audio
 ```
 
 ### 3. Create a virtual environment
