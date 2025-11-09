@@ -1,0 +1,120 @@
+# Environment variables
+.env
+.env.*
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+.envrc
+
+# Allow .env.example to be committed
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+.Python
+
+# Virtual Environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv
+.virtualenv
+pythonenv*
+.pyenv
+
+# Python Package Management
+pip-log.txt
+pip-delete-this-directory.txt
+.installed.cfg
+*.egg-info/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+*.cover
+*.log
+.cache
+nosetests.xml
+coverage.xml
+*.mo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Project specific - ignore media files in input folder
+input/*.mp3
+input/*.mp4
+input/*.mpeg
+input/*.mpga
+input/*.m4a
+input/*.wav
+input/*.webm
+results/*.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Sphinx documentation
+docs/_build/
+doc/_build/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Logs
+*.log
+logs/
