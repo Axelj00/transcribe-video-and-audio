@@ -13,27 +13,15 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import subprocess
 import tempfile
+import platform
 
 def log(message):
     """Print message with timestamp."""
     timestamp = datetime.now().strftime("%H:%M:%S")
     print(f"[{timestamp}] {message}")
 
-# Load environment variables
-print("Loading environment variables from .env file...", flush=True)
+# Load environment variables at module level (needed for configuration)
 load_dotenv()
-
-# Check if API key is present
-api_key = os.getenv("OPENAI_API_KEY")
-if api_key:
-    print(f"API key loaded successfully (length: {len(api_key)} characters)", flush=True)
-else:
-    print("WARNING: No API key found!", flush=True)
-
-# Initialize OpenAI client
-print("Initializing OpenAI client...", flush=True)
-client = OpenAI(api_key=api_key)
-print("OpenAI client ready!", flush=True)
 
 # Folder paths
 INPUT_FOLDER = Path("input")
@@ -42,9 +30,16 @@ RESULTS_FOLDER = Path("results")
 # Supported file formats (as per OpenAI Whisper API documentation)
 SUPPORTED_FORMATS = [".mp3", ".mp4", ".mpeg", ".mpga", ".m4a", ".wav", ".webm"]
 
+# Configuration from environment variables
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "gpt-4o-transcribe")
+WHISPER_LANGUAGE = os.getenv("WHISPER_LANGUAGE", None)  # None means auto-detect
+
 # Ensure folders exist
 INPUT_FOLDER.mkdir(exist_ok=True)
 RESULTS_FOLDER.mkdir(exist_ok=True)
+
+# Global client variable (initialized in main)
+client = None
 
 
 def get_audio_video_files():
@@ -131,7 +126,13 @@ def extract_audio_from_video(video_path):
             log(f"  Error output: {e.stderr}")
         raise Exception(f"Failed to extract audio from video")
     except FileNotFoundError:
-        raise Exception("ffmpeg not found. Please install ffmpeg: brew install ffmpeg")
+        os_type = platform.system()
+        install_cmd = {
+            "Darwin": "brew install ffmpeg",
+            "Linux": "sudo apt install ffmpeg (or use your package manager)",
+            "Windows": "Download from https://ffmpeg.org/download.html"
+        }.get(os_type, "Visit https://ffmpeg.org/download.html")
+        raise Exception(f"ffmpeg not found. Please install ffmpeg: {install_cmd}")
 
 def split_audio_file(audio_path, max_size_mb=20):
     """
@@ -202,11 +203,19 @@ def transcribe_audio_chunk(chunk_path, chunk_num, total_chunks):
         log(f"    Sending chunk to OpenAI Whisper API...")
         
         api_start = time.time()
-        transcription = client.audio.transcriptions.create(
-            model="gpt-4o-transcribe",
-            file=audio_file,
-            response_format="text"
-        )
+        
+        # Build API parameters
+        api_params = {
+            "model": WHISPER_MODEL,
+            "file": audio_file,
+            "response_format": "text"
+        }
+        
+        # Add language parameter if specified
+        if WHISPER_LANGUAGE:
+            api_params["language"] = WHISPER_LANGUAGE
+        
+        transcription = client.audio.transcriptions.create(**api_params)
         api_time = time.time() - api_start
         
         log(f"    Chunk {chunk_num} transcribed in {api_time:.1f} seconds ({len(transcription)} characters)")
@@ -323,16 +332,27 @@ def format_time(seconds):
 
 def main():
     """Main transcription loop."""
+    global client
+    
     log("=" * 70)
     log("Audio/Video Transcription Tool - Starting...")
     log("=" * 70)
     
     # Check for API key
-    if not os.getenv("OPENAI_API_KEY"):
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
         log("\nERROR: OPENAI_API_KEY not found in .env file")
         log("Please create a .env file with your OpenAI API key.")
         return
     
+    # Initialize OpenAI client
+    log("Initializing OpenAI client...")
+    client = OpenAI(api_key=api_key)
+    log(f"Using Whisper model: {WHISPER_MODEL}")
+    if WHISPER_LANGUAGE:
+        log(f"Language setting: {WHISPER_LANGUAGE}")
+    else:
+        log("Language: auto-detect")
     log("API key verified")
     
     # Get all audio/video files

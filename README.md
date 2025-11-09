@@ -81,6 +81,23 @@ OPENAI_API_KEY=your_api_key_here
 
 You can get an API key from [platform.openai.com](https://platform.openai.com/api-keys).
 
+### Optional Configuration
+
+You can customize the transcription behavior by adding these optional settings to your `.env` file:
+
+**Whisper Model Selection:**
+```
+WHISPER_MODEL=gpt-4o-transcribe
+```
+
+**Language Setting** (improves accuracy if you know the language):
+```
+WHISPER_LANGUAGE=en
+```
+Common language codes: `en` (English), `es` (Spanish), `fr` (French), `de` (German), `ja` (Japanese), `zh` (Chinese)
+
+Leave `WHISPER_LANGUAGE` unset or empty for automatic language detection.
+
 ## Usage
 
 1. Place your audio or video files in the `input/` folder
@@ -156,6 +173,10 @@ transcribe-video-and-audio/
 
 **"ffmpeg not found" error:**
 - Make sure ffmpeg is installed and accessible in your PATH
+- Installation instructions:
+  - **macOS:** `brew install ffmpeg`
+  - **Linux:** `sudo apt install ffmpeg` (or use your package manager)
+  - **Windows:** Download from [ffmpeg.org](https://ffmpeg.org/download.html)
 - Test by running `ffmpeg -version` in your terminal
 
 **"No API key found" error:**
